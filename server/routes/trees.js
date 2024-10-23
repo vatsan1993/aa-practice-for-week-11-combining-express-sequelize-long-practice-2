@@ -140,10 +140,24 @@ router.post('/', async (req, res, next) => {
  */
 router.delete('/:id', async (req, res, next) => {
   try {
-    res.json({
-      status: 'success',
-      message: `Successfully removed tree ${req.params.id}`,
-    });
+    let treeId = req.params.id;
+    let tree = await Tree.findByPk(treeId);
+
+    if (!tree) {
+      let err = new Error(`Could not remove tree ${req.params.id}`);
+      err.status = 400;
+      next({
+        status: 'not-found',
+        message: `Could not remove tree ${req.params.id}`,
+        details: 'Tree not found',
+      });
+    } else {
+      await tree.destroy();
+      res.json({
+        status: 'success',
+        message: `Successfully removed tree ${req.params.id}`,
+      });
+    }
   } catch (err) {
     next({
       status: 'error',
@@ -192,6 +206,41 @@ router.delete('/:id', async (req, res, next) => {
 router.put('/:id', async (req, res, next) => {
   try {
     // Your code here
+    let treeId = req.params.id;
+
+    let { id, name, location, height, size } = req.body;
+
+    if (id !== parseInt(treeId)) {
+      let err = new Error();
+      err.status = 'error';
+      err.message = `Could not update tree`;
+      err.details = `${treeId} does not match ${id}`;
+      next(err);
+    } else {
+      let tree = await Tree.findByPk(id);
+
+      if (tree === null) {
+        let err = new Error();
+        err.status = 'not-found';
+        err.message = `Could not update tree ${id}`;
+        err.details = 'Tree not found';
+        next(err);
+      }
+      tree.set({
+        id: id,
+        tree: name,
+        location: location,
+        heightFt: height,
+        groundCircumferenceFt: size,
+      });
+      await tree.save();
+
+      res.json({
+        status: 'success',
+        message: 'Successfully updated tree',
+        data: tree,
+      });
+    }
   } catch (err) {
     next({
       status: 'error',

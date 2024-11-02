@@ -3,8 +3,8 @@ const express = require('express');
 const router = express.Router();
 
 // Import models - DO NOT MODIFY
-const { Insect, Tree } = require('../db/models');
-const { Op } = require("sequelize");
+const { Insect, Tree, InsectTree } = require('../db/models');
+const { Op } = require('sequelize');
 
 /**
  * PHASE 7 - Step A: List of all trees with insects that are near them
@@ -20,13 +20,21 @@ const { Op } = require("sequelize");
  *   - Insects for each tree ordered alphabetically by name
  */
 router.get('/trees-insects', async (req, res, next) => {
-    let trees = [];
+  let trees = [];
 
-    trees = await Tree.findAll({
-        attributes: ['id', 'tree', 'location', 'heightFt'],
-    });
+  trees = await Tree.findAll({
+    attributes: ['id', 'tree', 'location', 'heightFt'],
+    include: {
+      model: Insect,
+    },
+    order: [
+      ['heightFt', 'DESC'],
+      [Insect, 'name'],
+    ],
+  });
+  let data = trees.filter((tree) => tree.Insects.length > 0);
 
-    res.json(trees);
+  res.json(data);
 });
 
 /**
@@ -43,22 +51,26 @@ router.get('/trees-insects', async (req, res, next) => {
  *   - Trees ordered alphabetically by tree
  */
 router.get('/insects-trees', async (req, res, next) => {
-    let payload = [];
+  let payload = [];
 
-    const insects = await Insect.findAll({
-        attributes: ['id', 'name', 'description'],
-        order: [ ['name'] ],
+  const insects = await Insect.findAll({
+    attributes: ['id', 'name', 'description'],
+    order: [['name']],
+  });
+  for (let i = 0; i < insects.length; i++) {
+    const insect = insects[i];
+    payload.push({
+      id: insect.id,
+      name: insect.name,
+      description: insect.description,
+      trees: await insect.getTrees({
+        order: ['tree'],
+        attributes: ['id', 'tree'],
+      }),
     });
-    for (let i = 0; i < insects.length; i++) {
-        const insect = insects[i];
-        payload.push({
-            id: insect.id,
-            name: insect.name,
-            description: insect.description,
-        });
-    }
+  }
 
-    res.json(payload);
+  res.json(payload);
 });
 
 /**

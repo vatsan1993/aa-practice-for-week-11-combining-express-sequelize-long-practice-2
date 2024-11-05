@@ -1,6 +1,7 @@
 // Instantiate router - DO NOT MODIFY
 const express = require('express');
 const router = express.Router();
+const { Op, where } = require('sequelize');
 
 /**
  * BASIC PHASE 1, Step A - Import model
@@ -31,6 +32,7 @@ router.get('/', async (req, res, next) => {
   // Your code here
 
   trees = await Tree.findAll({
+    attributes: ['heightFt', 'tree', 'id'],
     order: [['heightFt', 'DESC']],
   });
 
@@ -91,13 +93,13 @@ router.get('/:id', async (req, res, next) => {
  */
 router.post('/', async (req, res, next) => {
   try {
-    let { name, location, height, size } = req.body;
+    let { name, location, heightFt, groundCircumferenceFt } = req.body;
 
     let newTree = Tree.build({
       tree: name,
       location: location,
-      heightFt: height,
-      groundCircumferenceFt: size,
+      heightFt,
+      groundCircumferenceFt,
     });
 
     await newTree.save();
@@ -265,7 +267,22 @@ router.put('/:id', async (req, res, next) => {
  */
 router.get('/search/:value', async (req, res, next) => {
   let trees = [];
+  let value = req.params.value;
+  console.log(value);
 
+  trees = await Tree.findAll({
+    attributes: ['heightFt', 'tree', 'id'],
+    where: {
+      tree: {
+        [Op.like]: `%${value}%`,
+      },
+    },
+
+    include: {
+      model: Insect,
+      order: [['heightFt', 'DESC']],
+    },
+  });
   res.json(trees);
 });
 

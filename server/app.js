@@ -18,34 +18,35 @@ app.use('/insects', insectsRouter);
 
 // Connect router for joined API - DO NOT MODIFY
 const joinedRouter = require('./routes/joined');
+const { Op } = require('sequelize');
 app.use('/', joinedRouter);
 
 // Root route - DO NOT MODIFY
 app.get('/', (req, res) => {
-    res.json({
-        message: "API server is running"
-    });
+  res.json({
+    message: 'API server is running',
+  });
 });
 
 // Custom error middleware (triggered via call to next(err)) - DO NOT MODIFY
 app.use((err, req, res, next) => {
-    console.error(err);
-    res.status(400);
-    res.json(err);
+  console.error(err);
+  res.status(400);
+  res.json(err);
 });
 
 // Custom 404 (path not defined) - DO NOT MODIFY
 app.use((req, res) => {
-    res.status(404);
-    res.json({
-        error: 'not found'
-    });
+  res.status(404);
+  res.json({
+    error: 'not found',
+  });
 });
 
 // Set port and listen for incoming requests - DO NOT MODIFY
 if (require.main === module) {
-    const port = 8000;
-    app.listen(port, () => console.log('Server is listening on port', port));
+  const port = 8000;
+  app.listen(port, () => console.log('Server is listening on port', port));
 } else {
-    module.exports = app;
+  module.exports = app;
 }
